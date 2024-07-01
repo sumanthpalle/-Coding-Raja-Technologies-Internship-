@@ -1,0 +1,51 @@
+
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from nltk.stem import WordNetLemmatizer
+nltk.download('punkt')
+nltk.download('stopwords')
+nltk.download('wordnet')
+def preprocess_text(text):
+ # Lowercase
+ text = text.lower()
+ # Tokenize
+ words = word_tokenize(text)
+ # Remove stop words
+ words = [word for word in words if word not in stopwords.words('english')]
+ # Lemmatize
+ lemmatizer = WordNetLemmatizer()
+ words = [lemmatizer.lemmatize(word) for word in words]
+ return ' '.join(words)
+intents = {
+ "greeting": ["hello", "hi", "hey"],
+ "goodbye": ["bye", "farewell", "see you"],
+ "thankyou": ["thanks", "thank you", "thx"]
+}
+def recognize_intent(text):
+ for intent, keywords in intents.items():
+ if any(keyword in text for keyword in keywords):
+ return intent
+ return "unknown"
+user_input = "Hello, how are you?"
+intent = recognize_intent(preprocess_text(user_input))
+print(f"Recognized intent: {intent}")
+responses = {
+ "greeting": "Hello! How can I assist you today?",
+ "goodbye": "Goodbye! Have a great day!",
+ "thankyou": "You're welcome! If you have any other questions, feel free to ask."
+}
+def generate_response(intent):
+ return responses.get(intent, "I'm sorry, I don't understand that.")
+response = generate_response(intent)
+print(f"Bot response: {response}")
+from flask import Flask, request, jsonify
+app = Flask(__name__)
+@app.route('/chat', methods=['POST'])
+def chat():
+ user_input = request.json.get('message')
+ intent = recognize_intent(preprocess_text(user_input))
+ response = generate_response(intent)
+ return jsonify({'response': response})
+if __name__ == '__main__':
+ app.run(debug=True)
